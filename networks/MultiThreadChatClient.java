@@ -15,15 +15,15 @@ public class MultiThreadChatClient implements Runnable{
    private static DataInputStream is=null;
    private static BufferedReader inputLine=null;
    private static boolean closed=false;
-   
+
    public static void main(String [] args){
       // the default port
-      int portNumber=2222;
-      //default host
+      int portNumber=8080;
+      //default hos
       String host="localhost"; //change to connect to a dif server
       if(args.length <2){
-         System.out.println("Usage: java MultiThreadChatClient<host><portNumber>\n"+"Now using host="+ host+",portNumber="+portNumber);
-      
+         System.out.println("Connected using "+ host+" ,portNumber "+portNumber);
+
       }
       else{
          host=args[0];
@@ -44,7 +44,7 @@ public class MultiThreadChatClient implements Runnable{
          System.err.println("Couldn't get I/O for the connection to host " + host);
         }
         /*
-        *If everything has been initialised then we want to write some date to the 
+        *If everything has been initialised then we want to write some date to the
         *socket we have opened a connection to on the port portNumber.
         */
         if(clientSocket !=null && os != null && is!=null){
@@ -60,22 +60,22 @@ public class MultiThreadChatClient implements Runnable{
                os.close();
                is.close();
                clientSocket.close();
-               
+
          }
          catch(IOException e){
             System.err.println("IOException: "+ e);
          }
         }
-        
+
    }
    /*
    *Create a thread to read from a server.(non javadoc)
    *@see ja.lang.Runnable#run
-   
+
    */
    public void run(){
      /*
-     *Keep reading from the socket till we recieve "Bye" from the 
+     *Keep reading from the socket till we recieve "Bye" from the
      *server. Once we recieved that then we want to break.
      */
       String responseLine;
@@ -90,6 +90,6 @@ public class MultiThreadChatClient implements Runnable{
          System.err.println("IOException: "+ e);
       }
    }
-   
+
 
 }
