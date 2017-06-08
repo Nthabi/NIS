@@ -13,16 +13,17 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.IvParameterSpec;
 import sun.misc.*;
 
-public class encryptor{ 
+public class encryptor { 
    public static void main(String args[]){
       try {
-
+	 byte[] initVector = initialisationVector();
+	 System.out.println(initVector);
 	 System.out.println("Ayanda20");
-	 String siseko = encrypt("Ayanda20", "sisekoqwertyuiop", "athabhazxcvbnmas");
+	 String siseko = encrypt("Ayanda20", initVector, "athabhazxcvbnmas");
       	 System.out.println(siseko) ;
 
 	 System.out.println("decrypt");
-	 String decr = decrypt(siseko, "sisekoqwertyuiop", "athabhazxcvbnmas");
+	 String decr = decrypt(siseko, initVector, "athabhazxcvbnmas");
       	 System.out.println(decr) ;
 
       }catch(UnsupportedEncodingException e){
@@ -32,8 +33,9 @@ public class encryptor{
         }
    }
 
-   public static String encrypt(String Data, String iv, String seckeyValue) throws Exception {
-	IvParameterSpec initVector = new IvParameterSpec(iv.getBytes("utf-8"));
+   public static String encrypt(String Data, byte[] iv, String seckeyValue) throws Exception {
+	//IvParameterSpec initVector = new IvParameterSpec(iv.getBytes("utf-8"));
+	IvParameterSpec initVector = new IvParameterSpec(iv);
 	SecretKeySpec key = new SecretKeySpec(seckeyValue.getBytes("UTF-8"), "AES");
 
         Cipher c = Cipher.getInstance("AES/CBC/PKCS5Padding");
@@ -45,8 +47,8 @@ public class encryptor{
         return encryptedValue;
     }
 
-    public static String decrypt(String encryptedData, String iv, String seckeyValue) throws Exception {
-	IvParameterSpec initVector = new IvParameterSpec(iv.getBytes("utf-8"));
+    public static String decrypt(String encryptedData, byte[] iv, String seckeyValue) throws Exception {
+	IvParameterSpec initVector = new IvParameterSpec(iv);
 	SecretKeySpec key = new SecretKeySpec(seckeyValue.getBytes("UTF-8"), "AES");
 
         Cipher c = Cipher.getInstance("AES/CBC/PKCS5Padding");
@@ -57,4 +59,27 @@ public class encryptor{
         String decryptedValue = new String(decValue);
         return decryptedValue;
     }
+
+    //This following methods generates 16 byte initialisation vectors
+    public static byte[] initialisationVector() {
+	 SecureRandom random = new SecureRandom();
+	 byte[] values = new byte[16];
+	 random.nextBytes(values);
+	 return values;
+    }
+    
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
