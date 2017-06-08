@@ -15,22 +15,24 @@ private static Socket clientSocket=null;
 private static final int maxClientsCount=10;
 private static final clientThread [] threads=new clientThread[maxClientsCount];
 public static void main(String [] args){
-   //the default port number
-   int portNumber=2222;
+   //the default port number is set to 2222 else the user specifies the port number
+	int portNumber=8080;
+	int maxClients=2;
    if(args.length<1){
-      System.out.println("Usage: java MultiThreadChatServer<portNumber>\n +" + "Now using port number = "+portNumber);
-      
+      System.out.println("Now using port number = "+portNumber);
+
    }
    else{
-      portNumber=Integer.valueOf(args[0]).intValue();
-      
+	portNumber=Integer.valueOf(args[0]).intValue();
+	maxClients = Integer.valueOf(args[1]).intValue();
+
    }
    /*
-   *Open a server socket on the portNumber(default 222). Note that we can
-   *not choose a port less than 1023 if we are not privileged usera(root)
+   *Open a server socket on the portNumber(default 2222). Note that we can
+   *not choose a port less than 1023 if we are not privileged user(root)
    */
    try{
-      serverSocket= new ServerSocket(portNumber);
+      serverSocket= new ServerSocket(portNumber, maxClients);
    }catch(IOException e){
       System.out.println(e);
    }
@@ -47,7 +49,7 @@ public static void main(String [] args){
                (threads[i]=new clientThread(clientSocket, threads)).start();
                break;
             }
-            
+
          }
          if(i==maxClientsCount){
             PrintStream os= new PrintStream(clientSocket.getOutputStream());
@@ -63,8 +65,8 @@ public static void main(String [] args){
 
 }
 /*
-*The chat client thread. this client thread opnes the input and the output 
-* streams for a particular client, asks the client's name , informs all the 
+*The chat client thread. this client thread opnes the input and the output
+* streams for a particular client, asks the client's name , informs all the
 *Clients connectred to the server about the the fact that a new client has joined
 *the chat room, and as long as it recieve data, echoes that data back to all
 * other clients. When a client leaves the chat room this thread informs
@@ -76,7 +78,7 @@ class clientThread extends Thread{
    private Socket clientSocket=null;
    private final clientThread[] threads;
    private int maxClientsCount;
-   
+
    public clientThread(Socket clientSocket, clientThread[] threads){
       this.clientSocket=clientSocket;
       this.threads=threads;
@@ -92,11 +94,11 @@ class clientThread extends Thread{
          is=new DataInputStream(clientSocket.getInputStream());
          os=new PrintStream(clientSocket.getOutputStream());
          String name=is.readLine().trim();
-         os.println("hello "+ name + " to our chat room.\n to leave enter /quit in a new line");
+         os.println("hello "+ name + " Welcome to our chat room.\n to leave enter /quit in a new line");
          for(int i=0; i<maxClientsCount;i++){
             if(threads[i] != null && threads[i] !=this){
-               threads[i].os.println("***A new user" + name + " entered the chat room!!!***");
-               
+               threads[i].os.println("***A new user " + name + "has entered the chat room");
+
             }
          }
          while(true){
@@ -106,14 +108,14 @@ class clientThread extends Thread{
             }
             for(int i=0; i< maxClientsCount; i++){
                if(threads[i] !=null){
-                  threads[i].os.println("<"+ name +" &gr; "+ line);
+                  //threads[i].os.println("<"+ name + "> " + line);
                }
             }
          }
          for(int i=0; i<maxClientsCount; i++){
             if(threads[i] != null && threads[i] != this){
-               threads[i].os.println("*** the user " + name + "is leaving the chat room!!!***");
-               
+               threads[i].os.println("*** the user " + name + "has left the chat room!!!***");
+
             }
          }
          os.println("*** Bye" + name + " ***");
@@ -130,7 +132,7 @@ class clientThread extends Thread{
          is.close();
          os.close();
          clientSocket.close();
-         
+
       }catch(IOException e){
       }
    }
