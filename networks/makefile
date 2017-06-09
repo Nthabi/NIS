@@ -1,10 +1,10 @@
-SOURCES = MultiThreadChatClient.java MultiThreadChatServer.java 
+SOURCES = MultiThreadChatServerSync.java MultiThreadChatClient.java  
 
 compile:
 	javac -g $(SOURCES)
 
-runMultiThreadChatServer:
-	java MultiThreadChatServer
+runMultiThreadChatServerSync:
+	java MultiThreadChatServersync
 
 clean:
 	rm *.class
