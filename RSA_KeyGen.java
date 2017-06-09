@@ -28,12 +28,7 @@ public class RSA_KeyGen {
 			RSAPrivateKeySpec rsaPrivate = keyFactory.getKeySpec(privateKey, RSAPrivateKeySpec.class);
 			
 			storeKeys(file_public, rsaPublic.getModulus(), rsaPublic.getPublicExponent());
-			storeKeys(file_private, rsaPrivate.getModulus(), rsaPrivate.getPrivateExponent());
-			System.out.println("Before Encryption" + data);
-			byte[] dataEncr = encrypt(data);
-			System.out.println(dataEncr);
-			
-			System.out.println(decrypt(dataEncr));			
+			storeKeys(file_private, rsaPrivate.getModulus(), rsaPrivate.getPrivateExponent());		
 		}
 		catch(Exception e){
 			e.printStackTrace();
@@ -65,6 +60,7 @@ public class RSA_KeyGen {
 		
 		byte[] encrypted = null;
 		try{
+			System.out.println("Before Encryption " + data);
 			PublicKey publicKey = getPublicKey(this.file_public);
 			Cipher cipher = Cipher.getInstance("RSA");
 			cipher.init(Cipher.ENCRYPT_MODE, publicKey);
