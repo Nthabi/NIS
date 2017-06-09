@@ -4,7 +4,7 @@ compile:
 	javac -g $(SOURCES)
 
 runMultiThreadChatServerSync:
-	java MultiThreadChatServersync
+	java MultiThreadChatServerSync
 
 clean:
 	rm *.class
