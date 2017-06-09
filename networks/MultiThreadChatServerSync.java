@@ -30,6 +30,8 @@ public class MultiThreadChatServerSync{
    */
    try{
       serverSocket=new ServerSocket(portNumber);
+      String keyCLientA = "";
+      String keyCLientB = "";
    }catch(IOException e){
       System.out.println(e);
    }
@@ -119,59 +121,48 @@ class clientThread extends Thread{
                }
             }
          }
+try {
          /*Start conversation.*/
+	 encryptor object = new encryptor();
          while(true){
             String line=is.readLine();
+	    byte[] initVector = object.initialisationVector();
+	    String siseko = object.encrypt(line, initVector, "athabhazxcvbnmas");
             if(line.startsWith("/quit")){
                break;
             }
             /*Send private message to  client.*/
-              if(line.startsWith("@")){
-               String [] words= line.split("\\s",2);
-               if(words.length >1 && words[1] != null){
-                  words[1]=words[1].trim();
-                  if(!words[1].isEmpty()){
-                     synchronized(this){
-                        for(int i=0; i< maxClientsCount ;i++){
-                          if(threads[i] !=null && threads [i] !=this && threads[i].clientName !=null && threads[i].clientName.equals(words[0])){
-                          threads[i].os.println("<"+ name +"> "+ words [1]);
-                          /*
-                          *Echo this message to let the client know the private message sent
-                          */
-                          this.os.println("> "+ name + "> " + words[1]);
-                          break;
-                          }
-                        }
-                     }
-                  }
-               }
-             }else{
                /*
               The message is public, broadcast it to all other clients.
               */
               synchronized(this){
                  for(int i=0; i<maxClientsCount; i++){
                     if(threads[i] != null && threads[i].clientName != null){
-                    threads[i].os.println("<"+name + "> "+ line);
+			if (threads[i] != this) {
+				threads[i].os.println("<"+name + "> "+ siseko);
+				String decr = object.decrypt(siseko, initVector, "athabhazxcvbnmas");
+                       		threads[i].os.println("<"+name + "> "+ decr);
+			}
                     }
                  }
               }
-             }
-
-
+        
          }
+} catch(Exception e) { }
+
+	 /*
          synchronized(this){
             for(int i=0; i<maxClientsCount;i++){
                if(threads[i] != null && threads [i] != this && threads[i].clientName !=null){
                   threads[i].os.println("*** The user "+ name + " has disconnected ***");
                }
             }
-         }
+         }*/
+
          os.println("*** Bye "+ name + " ****");
          /*
          *Clean up. Set the current thread variable to null so that a new client
          *could be accepted by the server.
-
          */
          synchronized(this){
             for(int i=0; i<maxClientsCount; i++){
