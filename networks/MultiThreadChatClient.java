@@ -18,7 +18,7 @@ public class MultiThreadChatClient implements Runnable{
 
    public static void main(String [] args){
       // the default port
-      int portNumber=8080;
+      int portNumber=2040;
       //default hos
       String host="localhost"; //change to connect to a dif server
       if(args.length <2){
