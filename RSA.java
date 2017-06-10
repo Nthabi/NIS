@@ -8,7 +8,7 @@ import javax.crypto.*;
 
 public class RSA {
 	//Generates key pairs and stores them in specified files. Keys stored separately
-	public void rsaKeyGen(String data, String file_public, String file_private){
+	public void rsaKeyGen(String file_public, String file_private){
 		//byte[] keyBytes;
 		try{
 			
