@@ -13,7 +13,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.IvParameterSpec;
 import sun.misc.*;
 
-public class encryptor { 
+public class encryptor {
    public static void main(String args[]){
       try {
 	 byte[] initVector = initialisationVector();
@@ -42,7 +42,7 @@ public class encryptor {
         c.init(Cipher.ENCRYPT_MODE, key, initVector);
 
         byte[] encVal = c.doFinal(Data.getBytes());
-	
+
         String encryptedValue = Base64.getEncoder().encodeToString(encVal);
         return encryptedValue;
     }
@@ -54,7 +54,7 @@ public class encryptor {
         Cipher c = Cipher.getInstance("AES/CBC/PKCS5Padding");
         c.init(Cipher.DECRYPT_MODE, key, initVector);
         byte[] decordedValue = Base64.getDecoder().decode(encryptedData);
-        
+
         byte[] decValue = c.doFinal(decordedValue);
         String decryptedValue = new String(decValue);
         return decryptedValue;
@@ -67,19 +67,21 @@ public class encryptor {
 	 random.nextBytes(values);
 	 return values;
     }
-    
+
+
+    public SecretKey genMasterKey(){
+      try{
+              KeyGenerator masterKey = KeyGenerator.getInstance("AES");
+              masterKey.init(256);
+              SecretKey key = masterKey.generateKey();
+              //System.out.println("Master key established:" + key);
+              return key;
+              //return 1;
+            }catch(NoSuchAlgorithmException e){
+              System.out.println("No such algorithm");
+              return null;
+    }
+    //return key;
+  }
+
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -3,6 +3,10 @@ import java.io.PrintStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.ServerSocket;
+import javax.crypto.*;
+import javax.crypto.spec.SecretKeySpec;
+
+
 /*
 *A chat server that delivers public and private messages.
 */
@@ -13,24 +17,24 @@ public class MultiThreadChatServerSync{
 
    private static final int maxClientsCount=2;
    private static final clientThread [] threads=new clientThread[maxClientsCount];
-   private static final String clientAPrivateKey = "A1122";
-   private static final String clientBPrivateKey = "B1123";
 
    public static void main(String [] args){
       //the default port number;
-      int portNumber=2040;
+      int portNumber=2050;
       if(args.length <1){
          System.out.println("Connection established using port number = "+portNumber);
       }
       else{
          portNumber=Integer.valueOf(args[0]).intValue();
+         System.out.println("Connection established using port number = "+portNumber);
       }
       /*
    *Open a server socket on the portNumber(default 222). Note that we can
    *not choose a port less than 1023 if we are not privileged usera(root)
-   */
+   */int connections = 0;
    try{
       serverSocket=new ServerSocket(portNumber);
+      connections++;
       String keyCLientA = "";
       String keyCLientB = "";
    }catch(IOException e){
@@ -40,6 +44,7 @@ public class MultiThreadChatServerSync{
    *Create a client socket for each connection and pass it to a new client
    *thread
    */
+
    while(true){
       try{
          clientSocket=serverSocket.accept();
@@ -84,15 +89,12 @@ class clientThread extends Thread{
       this.clientSocket=clientSocket;
       this.threads=threads;
       maxClientsCount=threads.length;
-
-   }
-   public void genMasterKey(){
-
    }
 
    public void run(){
       int maxClientscount=this.maxClientsCount;
       clientThread [] threads=this.threads;
+
       try{
            /*
          *Create input and output streams for this client.
@@ -100,18 +102,17 @@ class clientThread extends Thread{
          is=new DataInputStream(clientSocket.getInputStream());
          os=new PrintStream(clientSocket.getOutputStream());
          String name;
+         //int clientCount = 1;
          //while(true){
             os.println("Enter your name");
             name=is.readLine().trim();
+         /*Welcome the new client and generate master key for each of the 2 clients*/
+         if(maxClientsCount == 2){
+           encryptor en = new encryptor();
+           SecretKey masterKey = en.genMasterKey();
+           System.out.println("Master key "+masterKey.toString() + " has been generated for the session" );
+         }
 
-            /*if(name.indexOf('@')==-1){
-               break;
-            }
-            else{
-               os.println("The name should not contain '@' character.");
-            }*/
-         //}
-         /*Welcome the new client.*/
          os.println(" You have been connected");
          synchronized(this){
             for(int i=0;i<maxClientsCount;i++){

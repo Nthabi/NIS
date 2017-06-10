@@ -16,15 +16,15 @@ public class MultiThreadChatClient implements Runnable{
 
    public static void main(String [] args){
 
-      int portNumber=2040;
+      int portNumber=2050;
       String host="localhost"; //change to connect to a dif server
-      if(args.length <2){
+      if(args.length <1){
          System.out.println("Connected using "+ host+" ,portNumber "+portNumber);
 
       }
-      /*else{
-         host=args[0];
-         portNumber=Integer.valueOf(args[1]).intValue();
+      else{
+         portNumber=Integer.valueOf(args[0]).intValue();
+         System.out.println("Connected using "+ host+" ,portNumber "+portNumber);
       }
       /*
       *Open a socket on a given host and port. Open input and output streams
