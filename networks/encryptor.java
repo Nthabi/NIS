@@ -69,7 +69,7 @@ public class encryptor {
     }
 
 
-    public SecretKey genMasterKey(){
+    public SecretKey genKey(){
       try{
               KeyGenerator masterKey = KeyGenerator.getInstance("AES");
               masterKey.init(256);
@@ -78,10 +78,22 @@ public class encryptor {
               return key;
               //return 1;
             }catch(NoSuchAlgorithmException e){
-              System.out.println("No such algorithm");
-              return null;
-    }
-    //return key;
+              System.out.println("Unexpected error in creating key");
+              return null;}
   }
+
+  //Generate sessionKey
+	public SecretKey genSessionKey(){
+    try{
+      KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+  		keyGen.init(256);
+  		SecretKey session = keyGen.generateKey();
+      return session;
+    }catch(NoSuchAlgorithmException e){
+        System.out.println("Unexpected error in creating session key");
+        return null;
+      }
+
+	}
 
 }

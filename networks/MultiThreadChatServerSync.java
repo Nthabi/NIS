@@ -18,6 +18,8 @@ public class MultiThreadChatServerSync{
    private static final int maxClientsCount=2;
    private static final clientThread [] threads=new clientThread[maxClientsCount];
 
+   private static SecretKey masterKey = null;
+
    public static void main(String [] args){
       //the default port number;
       int portNumber=2050;
@@ -31,12 +33,12 @@ public class MultiThreadChatServerSync{
       /*
    *Open a server socket on the portNumber(default 222). Note that we can
    *not choose a port less than 1023 if we are not privileged usera(root)
-   */int connections = 0;
+   */
    try{
       serverSocket=new ServerSocket(portNumber);
-      connections++;
-      String keyCLientA = "";
-      String keyCLientB = "";
+
+      //String keyCLientA = "";
+      //String keyCLientB = "";
    }catch(IOException e){
       System.out.println(e);
    }
@@ -52,6 +54,11 @@ public class MultiThreadChatServerSync{
          for( i=0; i<maxClientsCount;i++){
             if(threads[i]==null){
                (threads[i]=new clientThread(clientSocket,threads)).start();
+               if(i==1){
+                 encryptor en = new encryptor();
+                 masterKey = en.genKey();
+                 System.out.println("Master key "+masterKey.toString() + " has been generated for the session" );
+               }
                break;
             }
          }
@@ -84,6 +91,8 @@ class clientThread extends Thread{
    private Socket clientSocket=null;
    private final clientThread [] threads;
    private int maxClientsCount;
+   private static SecretKey sessionKey = null;
+
 
    public clientThread(Socket clientSocket,clientThread [] threads){
       this.clientSocket=clientSocket;
@@ -102,22 +111,31 @@ class clientThread extends Thread{
          is=new DataInputStream(clientSocket.getInputStream());
          os=new PrintStream(clientSocket.getOutputStream());
          String name;
-         //int clientCount = 1;
-         //while(true){
-            os.println("Enter your name");
-            name=is.readLine().trim();
+
+          os.println("Enter your name");
+          name=is.readLine().trim();
+
          /*Welcome the new client and generate master key for each of the 2 clients*/
-         if(maxClientsCount == 2){
+         /**if(threads.length == 1){
            encryptor en = new encryptor();
-           SecretKey masterKey = en.genMasterKey();
+           masterKey = en.genKey();
            System.out.println("Master key "+masterKey.toString() + " has been generated for the session" );
-         }
+           //Generate session key
+            sessionKey = en.genKey();
+            System.out.println("Session key "+sessionKey.toString() + " has been generated for the session" );
+         }else{} */
 
          os.println(" You have been connected");
          synchronized(this){
             for(int i=0;i<maxClientsCount;i++){
                if(threads[i] !=null && threads [i] ==this){
                   clientName=name;
+                  if(i==1){
+                    encryptor en = new encryptor();
+                    //Generate session key
+                     sessionKey = en.genKey();
+                     System.out.println("Session key "+sessionKey.toString() + " has been generated for the session" );
+                  }
                   break;
                }
             }
@@ -127,6 +145,15 @@ class clientThread extends Thread{
                }
             }
          }
+        /* if(threads.length == 1){
+           encryptor en = new encryptor();
+           masterKey = en.genKey();
+           System.out.println("Master key "+masterKey.toString() + " has been generated for the session" );
+           //Generate session key
+            sessionKey = en.genKey();
+            System.out.println("Session key "+sessionKey.toString() + " has been generated for the session" );
+         }else{}*/
+
 try {
          /*Start conversation.*/
 	 encryptor object = new encryptor();
