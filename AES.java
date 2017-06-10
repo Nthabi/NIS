@@ -10,7 +10,7 @@ import javax.crypto.SecretKey;
 
 public class AES {
 
-	
+	//Method to generate a symmetric key (master/session), which returns the key. Using AES
 	SecretKey aesKeyGen(String fname){
 		SecretKey key = null;
 		KeyGenerator keyGen;
