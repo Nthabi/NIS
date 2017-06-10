@@ -5,6 +5,7 @@ import java.net.Socket;
 import java.net.ServerSocket;
 import javax.crypto.*;
 import javax.crypto.spec.SecretKeySpec;
+import java.util.*;
 
 
 /*
@@ -14,10 +15,8 @@ public class MultiThreadChatServerSync{
 
    private static ServerSocket serverSocket=null;
    private static Socket clientSocket=null;
-
    private static final int maxClientsCount=2;
    private static final clientThread [] threads=new clientThread[maxClientsCount];
-
    private static SecretKey masterKey = null;
 
    public static void main(String [] args){
@@ -36,9 +35,6 @@ public class MultiThreadChatServerSync{
    */
    try{
       serverSocket=new ServerSocket(portNumber);
-
-      //String keyCLientA = "";
-      //String keyCLientB = "";
    }catch(IOException e){
       System.out.println(e);
    }
@@ -57,7 +53,7 @@ public class MultiThreadChatServerSync{
                if(i==1){
                  encryptor en = new encryptor();
                  masterKey = en.genKey();
-                 System.out.println("Master key "+masterKey.toString() + " has been generated for the session" );
+                 System.out.println("Master key "+masterKey.toString() + " has been generated" );
                }
                break;
             }
@@ -78,11 +74,8 @@ public class MultiThreadChatServerSync{
 
 /*
 *The chat client thread. this client thread opnes the input and the output
-* streams for a particular client, asks the client's name , informs all the
-*Clients connectred to the server about the the fact that a new client has joined
-*the chat room, and as long as it recieve data, echoes that data back to all
-* other clients. When a client leaves the chat room this thread informs
-*also all other clients about that and terminates.
+* streams for a particular client, asks the client's name and as long as it recieve data, echoes that data back
+* to other client. When a client leaves other client is informed.
 */
 class clientThread extends Thread{
    private String clientName = null;
@@ -92,6 +85,7 @@ class clientThread extends Thread{
    private final clientThread [] threads;
    private int maxClientsCount;
    private static SecretKey sessionKey = null;
+   //public static ArrayList<String> encryptedData; //Store the hash, encrypted msg, recipient publicKey
 
 
    public clientThread(Socket clientSocket,clientThread [] threads){
@@ -115,25 +109,20 @@ class clientThread extends Thread{
           os.println("Enter your name");
           name=is.readLine().trim();
 
-         /*Welcome the new client and generate master key for each of the 2 clients*/
-         /**if(threads.length == 1){
-           encryptor en = new encryptor();
-           masterKey = en.genKey();
-           System.out.println("Master key "+masterKey.toString() + " has been generated for the session" );
-           //Generate session key
-            sessionKey = en.genKey();
-            System.out.println("Session key "+sessionKey.toString() + " has been generated for the session" );
-         }else{} */
+         /*Welcome the new client and generate a shared master key the 2 clients
+            Also generates a shared session key used for encryption
+         */
 
+         encryptor object = new encryptor();
          os.println(" You have been connected");
          synchronized(this){
             for(int i=0;i<maxClientsCount;i++){
                if(threads[i] !=null && threads [i] ==this){
                   clientName=name;
                   if(i==1){
-                    encryptor en = new encryptor();
+                    //encryptor en = new encryptor();
                     //Generate session key
-                     sessionKey = en.genKey();
+                     sessionKey = object.genKey();
                      System.out.println("Session key "+sessionKey.toString() + " has been generated for the session" );
                   }
                   break;
@@ -143,39 +132,43 @@ class clientThread extends Thread{
                if(threads[i] !=null && threads[i] != this){
                   threads[i].os.println("***" + name + " connected on the server ***");
                }
-            }
-         }
-        /* if(threads.length == 1){
-           encryptor en = new encryptor();
-           masterKey = en.genKey();
-           System.out.println("Master key "+masterKey.toString() + " has been generated for the session" );
-           //Generate session key
-            sessionKey = en.genKey();
-            System.out.println("Session key "+sessionKey.toString() + " has been generated for the session" );
-         }else{}*/
+            }}
+
 
 try {
          /*Start conversation.*/
-	 encryptor object = new encryptor();
-         while(true){
-            String line=is.readLine();
-	    byte[] initVector = object.initialisationVector();
-	    String siseko = object.encrypt(line, initVector, "athabhazxcvbnmas");
-            if(line.startsWith("/quit")){
-               break;
-            }
-            /*Send private message to  client.*/
-               /*
-              The message is public, broadcast it to all other clients.
-              */
+
+          //encryptedData = new ArrayList<String>();
+          while(true){
+               String line=is.readLine();
+
+               /*Hash the text user has entered*/
+               String hash = object.hashText(line);
+               /*Encrypt message with sessionKey*/
+    	         byte[] initVector = object.initialisationVector();
+    	         String encryptedMessage = object.encrypt(line, initVector, sessionKey.toString());
+
+                if(line.startsWith("/quit")){
+                   break;
+                }
+
+            /*Send hash and encrypted message to  client.*/
               synchronized(this){
                  for(int i=0; i<maxClientsCount; i++){
                     if(threads[i] != null && threads[i].clientName != null){
-			if (threads[i] != this) {
-				threads[i].os.println("<"+name + "> "+ siseko);
-				String decr = object.decrypt(siseko, initVector, "athabhazxcvbnmas");
-                       		threads[i].os.println("<"+name + "> "+ decr);
-			}
+			                   if (threads[i] != this) {
+				                       threads[i].os.println("<"+name + "> "+ encryptedMessage);
+				                           String decryptedMessage = object.decrypt(encryptedMessage, initVector,sessionKey.toString());
+
+                                   /*Check if hash of decryptedMessage == original message hash and print else show error*/
+                                   String decryptedMessageHash = object.hashText(decryptedMessage);
+                                   if(decryptedMessageHash.equals(hash)){
+                                      threads[i].os.println("<"+name + "> "+ decryptedMessage);
+                                   }else{
+                                     System.out.println("Your device has been compromised! Message from unreliable source");
+                                   }
+
+			                   }
                     }
                  }
               }
@@ -183,14 +176,13 @@ try {
          }
 } catch(Exception e) { }
 
-	 /*
          synchronized(this){
             for(int i=0; i<maxClientsCount;i++){
                if(threads[i] != null && threads [i] != this && threads[i].clientName !=null){
                   threads[i].os.println("*** The user "+ name + " has disconnected ***");
                }
             }
-         }*/
+         }
 
          os.println("*** Bye "+ name + " ****");
          /*
@@ -212,6 +204,8 @@ try {
       }
       catch(IOException e){
 
-      }
+      //}
    }
+}
+
 }
