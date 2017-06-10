@@ -19,10 +19,7 @@ public class AES {
 			keyGen.init(256);
 			key = keyGen.generateKey();
 				
-			System.out.println(key);
-				
-			oos.writeObject(key);
-				
+			System.out.println(key);				
 		}
 			
 		catch(Exception e){
