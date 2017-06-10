@@ -23,31 +23,9 @@ public class AES {
 				
 			oos.writeObject(key);
 				
-			}
-			oos.flush();
-			oos.close();
-			fos.flush();
-			fos.close();
 		}
+			
 		catch(Exception e){
-			e.printStackTrace();
-		}
-		return key;
-	}
-	SecretKey getAesKey(String fname){
-		SecretKey key = null;
-		try{
-			FileInputStream fis = new FileInputStream(fname);
-			ObjectInputStream ois = new ObjectInputStream(fis);
-			
-			for(int i=0; i<writeCount; i++){
-				key = (SecretKey) ois.readObject();
-				System.out.println(key.getEncoded());
-			}
-			ois.close();
-			fis.close();
-			
-		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return key;
