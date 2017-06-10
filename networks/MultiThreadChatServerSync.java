@@ -1,4 +1,3 @@
-//example 26
 import java.io.DataInputStream;
 import java.io.PrintStream;
 import java.io.IOException;
@@ -8,13 +7,15 @@ import java.net.ServerSocket;
 *A chat server that delivers public and private messages.
 */
 public class MultiThreadChatServerSync{
-   //the server socket
+
    private static ServerSocket serverSocket=null;
-   //The client socket
    private static Socket clientSocket=null;
-   //This chat server can accept up to maxClientsCount' connections.
-   private static final int maxClientsCount=10;
+
+   private static final int maxClientsCount=2;
    private static final clientThread [] threads=new clientThread[maxClientsCount];
+   private static final String clientAPrivateKey = "A1122";
+   private static final String clientBPrivateKey = "B1123";
+
    public static void main(String [] args){
       //the default port number;
       int portNumber=2040;
@@ -85,6 +86,9 @@ class clientThread extends Thread{
       maxClientsCount=threads.length;
 
    }
+   public void genMasterKey(){
+
+   }
 
    public void run(){
       int maxClientscount=this.maxClientsCount;
@@ -96,16 +100,17 @@ class clientThread extends Thread{
          is=new DataInputStream(clientSocket.getInputStream());
          os=new PrintStream(clientSocket.getOutputStream());
          String name;
-         while(true){
+         //while(true){
             os.println("Enter your name");
             name=is.readLine().trim();
-            if(name.indexOf('@')==-1){
+
+            /*if(name.indexOf('@')==-1){
                break;
             }
             else{
                os.println("The name should not contain '@' character.");
-            }
-         }
+            }*/
+         //}
          /*Welcome the new client.*/
          os.println(" You have been connected");
          synchronized(this){
@@ -146,7 +151,7 @@ try {
                     }
                  }
               }
-        
+
          }
 } catch(Exception e) { }
 
