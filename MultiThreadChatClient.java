@@ -1,6 +1,9 @@
+package rsa;
+
 import java.io.DataInputStream;
 import java.io.PrintStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.net.Socket;
@@ -21,7 +24,7 @@ public class MultiThreadChatClient implements Runnable{
    public static void main(String [] args){
 
       // the default port
-      int portNumber=2040;
+      int portNumber=2050;
       //default hos
       String host="localhost"; //change to connect to a dif server
       if(args.length <2){
@@ -31,16 +34,9 @@ public class MultiThreadChatClient implements Runnable{
          host=args[0];
          portNumber=Integer.valueOf(args[1]).intValue();
       }
-      
-      /**createFile(pub_key);
-      createFile(prv_key);*/
 
       try {
- 
-    	  /** **DEBUG
-    	   * System.out.println(publicKey);
-    	  System.out.println(privateKey);*/
-    	  //System.out.println("Server public key: " + MultiThreadChatServerSync.publicKey);
+    	 // System.out.println("Server public key: " + MultiThreadChatServerSync.publicKey);
     	  
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -64,12 +60,16 @@ public class MultiThreadChatClient implements Runnable{
         *If everything has been initialised then we want to write some data to the
         *socket we have opened a connection to on the port portNumber.
         */
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
         if(clientSocket !=null && os != null && is!=null){
          try{
                //Create a thread to read from the server
                new Thread(new MultiThreadChatClient()).start();
                while(!closed){
-                  os.println(inputLine.readLine().trim());
+            	   try{
+            		
+            	   }catch(Exception e){}
+            	   //os.println(inputLine.readLine().trim());
                }
                /*
                *Close the output stream, close the input stream, close the socket
@@ -83,8 +83,9 @@ public class MultiThreadChatClient implements Runnable{
             System.err.println("IOException: "+ e);
          }
         }
-
    }
+   
+
    /*
    *Create a thread to read from a server.(non javadoc)
    *@see ja.lang.Runnable#run

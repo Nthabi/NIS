@@ -1,66 +1,56 @@
+package rsa;
+
 import java.io.DataInputStream;
-import java.io.File;
 import java.io.PrintStream;
+import java.lang.reflect.Array;
 import java.io.IOException;
 import java.net.Socket;
-import java.security.*;
-import java.util.Arrays;
 import java.net.ServerSocket;
+import java.security.*;
+import javax.crypto.*;
+import javax.crypto.spec.SecretKeySpec;
+
 /*
 *A chat server that delivers public and private messages.
 */
-
-
 public class MultiThreadChatServerSync{
-	//server's public key 
-	
-	static File pub_key = new File("public.key"); //name of public key file
-	static File prv_key = new File("private.key"); //name of private key file
-	//file to store public keys
-	static File public_keys = new File("keys.public");
-	static RSA rsa = new RSA();
-   //the server socket
+
    private static ServerSocket serverSocket=null;
-   //The client socket
    private static Socket clientSocket=null;
-   //This chat server can accept up to maxClientsCount' connections.
-   private static final int maxClientsCount=10;
+
+   private static final int maxClientsCount=2;
    private static final clientThread [] threads=new clientThread[maxClientsCount];
-   
-   //generate public and private keys for server
+   static encryptor en = new encryptor();
+ //generate public and private keys for server
+   static RSA rsa = new RSA();
    private static final KeyPair keyPair = rsa.rsaKeyGen();
    public static PublicKey publicKey = keyPair.getPublic();
    private static PrivateKey privateKey = keyPair.getPrivate();
+   //generate master key
+   private static final SecretKey masterKey = en.genKey();
+   //Generate session key
+   private static SecretKey sessionKey = null;
 
    public static void main(String [] args){
-	   
-	   try {
-	    	    
-		   /** **DEBUG
-		    System.out.println(publicKey);
-			System.out.println(privateKey);*/
-		   
-	    	  
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-	   
+	   sessionKey = en.genKey();
       //the default port number;
-      int portNumber=2040;
+      int portNumber=2050;
       if(args.length <1){
          System.out.println("Connection established using port number = "+portNumber);
       }
       else{
          portNumber=Integer.valueOf(args[0]).intValue();
+         System.out.println("Connection established using port number = "+portNumber);
       }
-      
       /*
    *Open a server socket on the portNumber(default 222). Note that we can
    *not choose a port less than 1023 if we are not privileged usera(root)
    */
    try{
       serverSocket=new ServerSocket(portNumber);
-      
+
+      //String keyCLientA = "";
+      //String keyCLientB = "";
    }catch(IOException e){
       System.out.println(e);
    }
@@ -68,6 +58,7 @@ public class MultiThreadChatServerSync{
    *Create a client socket for each connection and pass it to a new client
    *thread
    */
+
    while(true){
       try{
          clientSocket=serverSocket.accept();
@@ -90,7 +81,8 @@ public class MultiThreadChatServerSync{
    }
    }
    
-   private static byte[] getNonce(){
+   //create NONCE to be used for authentication
+   static byte[] getNonce(){
 	   byte[] nonce = new byte[128];
 	   try{
 		   SecureRandom sr = new SecureRandom();
@@ -103,6 +95,15 @@ public class MultiThreadChatServerSync{
 	   
 	   return nonce;
    }
+   
+   static SecretKey getMaster(){
+	   return masterKey;
+   }
+   
+   static SecretKey getSession(){
+	   return sessionKey;
+   }
+
 }
 
 /*
@@ -120,19 +121,32 @@ class clientThread extends Thread{
    private Socket clientSocket=null;
    private final clientThread [] threads;
    private int maxClientsCount;
-
-
+   private SecretKey master;
+   private SecretKey session;
+   static PublicKey serverPubKey;
+   //generate public and private keys for client
+   RSA rsa = new RSA();
+   private KeyPair keyPair = null; 
+   public PublicKey publicKey = null;  
+   private PrivateKey privateKey = null; 
+   
+   MultiThreadChatServerSync server = new MultiThreadChatServerSync();
    
    public clientThread(Socket clientSocket,clientThread [] threads){
       this.clientSocket=clientSocket;
       this.threads=threads;
       maxClientsCount=threads.length;
+      this.master = server.getMaster();
+      this.serverPubKey = server.publicKey;
+      this.keyPair = rsa.rsaKeyGen();
+      this.publicKey = keyPair.getPublic();
+      this.privateKey = keyPair.getPrivate();
    }
 
-   @SuppressWarnings("deprecation")
-public void run(){
+   public void run(){
       int maxClientscount=this.maxClientsCount;
       clientThread [] threads=this.threads;
+
       try{
            /*
          *Create input and output streams for this client.
@@ -140,26 +154,26 @@ public void run(){
          is=new DataInputStream(clientSocket.getInputStream());
          os=new PrintStream(clientSocket.getOutputStream());
          String name;
-         while(true){
-            os.println("Enter your name");
-            name=is.readLine().trim();
-            if(name.indexOf('@')==-1){
-               break;
-            }
-            else{
-               os.println("The name should not contain '@' character.");
-            }         
-         }
+
+          os.println("Enter your name");
+          name=is.readLine().trim();
          
          synchronized(this){
-        	//authentication protocol here...
-             
-        	 
-        	/*Welcome the new client.*/
-            os.println(" You have been connected");
             for(int i=0;i<maxClientsCount;i++){
                if(threads[i] !=null && threads [i] ==this){
                   clientName=name;
+                  /******authentication protocol******/
+                  byte[] nonce = server.getNonce();
+                  this.os.write(nonce, 0, nonce.length);
+                  
+                  	 os.println(" You have been connected");
+                	 this.session = server.getSession();
+                     this.os.println("Session key "+ this.session + " has been generated for the session" );
+                     this.os.println("Master key for thread: " + this.master);
+                     this.os.println("Server Public Key: " + this.serverPubKey);
+                     this.os.println("Your Public Key: " + this.publicKey);
+                     this.os.println("Your private Key: " + this.privateKey);
+                  
                   break;
                }
             }
@@ -169,6 +183,15 @@ public void run(){
                }
             }
          }
+        /* if(threads.length == 1){
+           encryptor en = new encryptor();
+           masterKey = en.genKey();
+           System.out.println("Master key "+masterKey.toString() + " has been generated for the session" );
+           //Generate session key
+            sessionKey = en.genKey();
+            System.out.println("Session key "+sessionKey.toString() + " has been generated for the session" );
+         }else{}*/
+
 try {
          /*Start conversation.*/
 	 encryptor object = new encryptor();
@@ -194,7 +217,7 @@ try {
                     }
                  }
               }
-        
+
          }
 } catch(Exception e) { }
 
