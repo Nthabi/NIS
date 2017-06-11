@@ -1,5 +1,3 @@
-package rsa;
-
 import java.util.UUID;
 import java.io.UnsupportedEncodingException;
 import java.security.Key;
