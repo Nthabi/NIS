@@ -1,4 +1,4 @@
-SOURCES = MultiThreadChatServerSync.java MultiThreadChatClient.java  
+SOURCES = MultiThreadChatServerSync.java MultiThreadChatClient.java encryptor.java 
 
 compile:
 	javac -g $(SOURCES)

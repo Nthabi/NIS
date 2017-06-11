@@ -7,27 +7,24 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 public class MultiThreadChatClient implements Runnable{
-   //The client socket
+
    private static Socket clientSocket= null;
-   //the output stream
    private static PrintStream os= null;
-   //input stream
    private static DataInputStream is=null;
    private static BufferedReader inputLine=null;
    private static boolean closed=false;
 
    public static void main(String [] args){
-      // the default port
-      int portNumber=2040;
-      //default hos
+
+      int portNumber=2050;
       String host="localhost"; //change to connect to a dif server
-      if(args.length <2){
+      if(args.length <1){
          System.out.println("Connected using "+ host+" ,portNumber "+portNumber);
 
       }
       else{
-         host=args[0];
-         portNumber=Integer.valueOf(args[1]).intValue();
+         portNumber=Integer.valueOf(args[0]).intValue();
+         System.out.println("Connected using "+ host+" ,portNumber "+portNumber);
       }
       /*
       *Open a socket on a given host and port. Open input and output streams
