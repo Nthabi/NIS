@@ -1,3 +1,4 @@
+package rsa;
 
 import java.util.UUID;
 import java.io.UnsupportedEncodingException;
@@ -13,7 +14,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.IvParameterSpec;
 import sun.misc.*;
 
-public class encryptor { 
+public class encryptor {
    public static void main(String args[]){
       try {
 	 byte[] initVector = initialisationVector();
@@ -42,7 +43,7 @@ public class encryptor {
         c.init(Cipher.ENCRYPT_MODE, key, initVector);
 
         byte[] encVal = c.doFinal(Data.getBytes());
-	
+
         String encryptedValue = Base64.getEncoder().encodeToString(encVal);
         return encryptedValue;
     }
@@ -54,7 +55,7 @@ public class encryptor {
         Cipher c = Cipher.getInstance("AES/CBC/PKCS5Padding");
         c.init(Cipher.DECRYPT_MODE, key, initVector);
         byte[] decordedValue = Base64.getDecoder().decode(encryptedData);
-        
+
         byte[] decValue = c.doFinal(decordedValue);
         String decryptedValue = new String(decValue);
         return decryptedValue;
@@ -67,19 +68,54 @@ public class encryptor {
 	 random.nextBytes(values);
 	 return values;
     }
-    
+
+
+    public SecretKey genKey(){
+      try{
+              KeyGenerator masterKey = KeyGenerator.getInstance("AES");
+              masterKey.init(256);
+              SecretKey key = masterKey.generateKey();
+              //System.out.println("Master key established:" + key);
+              return key;
+              //return 1;
+            }catch(NoSuchAlgorithmException e){
+              System.out.println("Unexpected error in creating key");
+              return null;}
+  }
+
+  //Generate sessionKey
+	public SecretKey genSessionKey(){
+    try{
+      KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+  		keyGen.init(256);
+  		SecretKey session = keyGen.generateKey();
+      return session;
+    }catch(NoSuchAlgorithmException e){
+        System.out.println("Unexpected error in creating session key");
+        return null;
+      }
+
+	}
+	
+	  public String hashText (String s){
+		  /*String hashing function using MD5*/
+		    byte[] hash = null;
+		    try {
+		        MessageDigest md = MessageDigest.getInstance("MD5");
+		        hash = md.digest(s.getBytes());
+
+		    } catch (NoSuchAlgorithmException e) { e.printStackTrace(); }
+		    StringBuilder sb = new StringBuilder();
+		    for (int i = 0; i < hash.length; ++i) {
+		        String hex = Integer.toHexString(hash[i]);
+		        if (hex.length() == 1) {
+		            sb.append(0);
+		            sb.append(hex.charAt(hex.length() - 1));
+		        } else {
+		            sb.append(hex.substring(hex.length() - 2));
+		        }
+		    }
+		    return sb.toString();
+		  }
+
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
