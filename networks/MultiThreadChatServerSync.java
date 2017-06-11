@@ -1,5 +1,3 @@
-package rsa;
-
 import java.io.DataInputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Array;
