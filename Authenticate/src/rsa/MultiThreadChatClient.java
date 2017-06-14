@@ -3,6 +3,7 @@ package rsa;
 import java.io.DataInputStream;
 import java.io.PrintStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
@@ -19,6 +20,7 @@ public class MultiThreadChatClient implements Runnable{
    private static DataInputStream is=null;
    private static BufferedReader inputLine=null;
    private static boolean closed=false;
+   
   
    
    public static void main(String [] args){
@@ -35,13 +37,6 @@ public class MultiThreadChatClient implements Runnable{
          portNumber=Integer.valueOf(args[1]).intValue();
       }
 
-      try {
-    	 // System.out.println("Server public key: " + MultiThreadChatServerSync.publicKey);
-    	  
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-      
       /*
       *Open a socket on a given host and port. Open input and output streams
       */
@@ -60,7 +55,6 @@ public class MultiThreadChatClient implements Runnable{
         *If everything has been initialised then we want to write some data to the
         *socket we have opened a connection to on the port portNumber.
         */
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
         if(clientSocket !=null && os != null && is!=null){
          try{
                //Create a thread to read from the server
@@ -94,9 +88,12 @@ public class MultiThreadChatClient implements Runnable{
      *server. Once we recieved that then we want to break.
      */
       String responseLine;
+      
       try{
          while((responseLine=is.readLine()) !=null){
-            System.out.println(responseLine);
+           
+           System.out.println(responseLine);
+           
             if(responseLine.indexOf("***Bye")!=-1)
                break;
          }
