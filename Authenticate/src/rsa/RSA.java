@@ -23,15 +23,15 @@ public class RSA {
 	}
 	
 	//for encryption using public key
-	byte[] encryptPublic(String data, PublicKey publicKey){
+	byte[] encrypt(byte[] data, PublicKey publicKey){
 		
 		byte[] encrypted = null;
 		try{
 			//PublicKey publicKey = getPublicKey(fname); //regenerates key and returns it
 			Cipher cipher = Cipher.getInstance("RSA");
 			cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-			encrypted = cipher.doFinal(data.getBytes());
-			System.out.println("Encrypted Data " + encrypted);
+			encrypted = cipher.doFinal(data);
+			//System.out.println("Encrypted Data " + encrypted.length);
 		}
 		
 		catch(Exception e){
@@ -42,14 +42,14 @@ public class RSA {
 	}
 	
 	//for encryption using private key
-		byte[] encryptPrivate(String data, PrivateKey privateKey){
+		byte[] encrypt(byte[] data, PrivateKey privateKey){
 			
 			byte[] encrypted = null;
 			try{
 				//PublicKey publicKey = getPublicKey(fname); //regenerates key and returns it
 				Cipher cipher = Cipher.getInstance("RSA");
 				cipher.init(Cipher.ENCRYPT_MODE, privateKey);
-				encrypted = cipher.doFinal(data.getBytes());
+				encrypted = cipher.doFinal(data);
 				System.out.println("Encrypted Data " + encrypted);
 			}
 			
@@ -61,15 +61,13 @@ public class RSA {
 		}
 	
 		//dencryption using private key
-		String decrypt(byte[] data, PublicKey publicKey){
-			String decrypted = null;
+		byte[] decrypt(byte[] data, PublicKey publicKey){
+			byte[] decrypted = null;
 			try{
 				//PrivateKey privateKey = getPrivateKey(fname); //regenerates key and returns it
 				Cipher cipher = Cipher.getInstance("RSA");
 				cipher.init(Cipher.DECRYPT_MODE, publicKey);
-				byte[] decrByte = cipher.doFinal(data);
-				decrypted = new String(decrByte);
-				System.out.println("Decrypted Message: " + decrypted);
+				decrypted = cipher.doFinal(data);
 			}
 			catch(Exception e){
 				e.printStackTrace();
@@ -78,19 +76,47 @@ public class RSA {
 		}
 	
 	//dencryption using private key
-	String decrypt(byte[] data, PrivateKey privateKey){
-		String decrypted = null;
+	byte[] decrypt(byte[] data, PrivateKey privateKey){
+		byte[] decrByte = null;
 		try{
 			//PrivateKey privateKey = getPrivateKey(fname); //regenerates key and returns it
 			Cipher cipher = Cipher.getInstance("RSA");
 			cipher.init(Cipher.DECRYPT_MODE, privateKey);
-			byte[] decrByte = cipher.doFinal(data);
-			decrypted = new String(decrByte);
-			System.out.println("Decrypted Message: " + decrypted);
+			decrByte = cipher.doFinal(data);
+			//decrypted = new String(decrByte);
 		}
 		catch(Exception e){
 			e.printStackTrace();
 		}
-		return decrypted;	
+		return decrByte;	
+	}
+	
+	//method to sign message
+	byte[] sign(byte[] data, PrivateKey privateKey){
+		byte[] signed = null;
+		try{
+			Signature sig = Signature.getInstance("SHA1withRSA");
+			sig.initSign(privateKey);
+			sig.update(data);
+			signed = sig.sign();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return signed;
+	}
+	
+	
+	//method to verify signature
+	boolean verifySign(byte[] data, byte[] signed, PublicKey publicKey){
+		boolean verified = false;
+		try{
+			Signature sig = Signature.getInstance("SHA1withRSA");
+			sig.initVerify(publicKey);
+			sig.update(data);
+			verified = sig.verify(signed);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return verified;
 	}
 }
