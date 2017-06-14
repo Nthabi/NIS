@@ -34,7 +34,7 @@ public class encryptor {
         }
    }*/
 
-   public static byte[] encrypt(String Data, byte[] iv, byte[] seckeyValue) throws Exception {
+   public static byte[] encrypt(byte[] Data, byte[] iv, byte[] seckeyValue) throws Exception {
 	//IvParameterSpec initVector = new IvParameterSpec(iv.getBytes("utf-8"));
 	IvParameterSpec initVector = new IvParameterSpec(iv);
 	SecretKeySpec key = new SecretKeySpec(seckeyValue, "AES");
@@ -42,7 +42,7 @@ public class encryptor {
         Cipher c = Cipher.getInstance("AES/CBC/PKCS5Padding");
         c.init(Cipher.ENCRYPT_MODE, key, initVector);
 
-        byte[] encVal = c.doFinal(Data.getBytes());
+        byte[] encVal = c.doFinal(Data);
 
         return encVal;
     }

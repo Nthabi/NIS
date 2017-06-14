@@ -1,12 +1,13 @@
 package rsa;
 
-import java.io.DataInputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.lang.reflect.Array;
-import java.io.IOException;
 import java.net.Socket;
 import java.net.ServerSocket;
 import java.security.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import javax.crypto.*;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -25,14 +26,15 @@ public class MultiThreadChatServerSync{
    static RSA rsa = new RSA();
    private static final KeyPair keyPair = rsa.rsaKeyGen();
    public static PublicKey publicKey = keyPair.getPublic();
-   private static PrivateKey privateKey = keyPair.getPrivate();
+   static PrivateKey privateKey = keyPair.getPrivate();
    //generate master key
-   private static final SecretKey masterKey = en.genKey();
+   private static SecretKey masterKey = null;
    //Generate session key
    private static SecretKey sessionKey = null;
 
    public static void main(String [] args){
 	   sessionKey = en.genKey();
+	   masterKey = en.genKey();
       //the default port number;
       int portNumber=2050;
       if(args.length <1){
@@ -95,14 +97,13 @@ public class MultiThreadChatServerSync{
 	   
 	   return nonce;
    }
-   
-   static SecretKey getMaster(){
-	   return masterKey;
-   }
-   
    static SecretKey getSession(){
 	   return sessionKey;
    }
+
+public SecretKey getMaster() {
+	return masterKey;
+}
 
 }
 
@@ -131,20 +132,46 @@ class clientThread extends Thread{
    private PrivateKey privateKey = null; 
    
    MultiThreadChatServerSync server = new MultiThreadChatServerSync();
+   encryptor encr = new encryptor();
+  
+   ByteArrayOutputStream bos;
+   ObjectOutputStream oos;
+   ArrayList<byte[]> signedData;
    
    public clientThread(Socket clientSocket,clientThread [] threads){
       this.clientSocket=clientSocket;
       this.threads=threads;
       maxClientsCount=threads.length;
       this.master = server.getMaster();
-      this.serverPubKey = server.publicKey;
+      this.serverPubKey = MultiThreadChatServerSync.publicKey;
       this.keyPair = rsa.rsaKeyGen();
       this.publicKey = keyPair.getPublic();
       this.privateKey = keyPair.getPrivate();
    }
+   
+   //method to send encrypted NONCE for authentication
+   private ArrayList<byte[]> sendEncrypted(byte[] nonce, byte[] iv){
+	   byte[] encrypted = null;
+	   
+	   try{
+		   byte[] masterEncr = encryptor.encrypt(nonce, iv, this.master.getEncoded());
+		   encrypted = rsa.encrypt(masterEncr, this.serverPubKey);
+		   byte[] sign = rsa.sign(encrypted, this.privateKey);
+		   //System.out.println(Arrays.toString(sign));
+		   this.signedData = new ArrayList<byte[]>();
+		   this.signedData.add(encrypted); 
+		   this.signedData.add(sign);
+		   //System.out.println(new String(encrypted));
+	   }catch(Exception e){
+		   e.printStackTrace();
+	   }
+	   
+	   return signedData;
+   }
 
-   public void run(){
-      int maxClientscount=this.maxClientsCount;
+
+public void run(){
+      //int maxClientscount=this.maxClientsCount;
       clientThread [] threads=this.threads;
 
       try{
@@ -154,29 +181,54 @@ class clientThread extends Thread{
          is=new DataInputStream(clientSocket.getInputStream());
          os=new PrintStream(clientSocket.getOutputStream());
          String name;
-
-          os.println("Enter your name");
-          name=is.readLine().trim();
+         byte[] nonce = null;
+         byte[] initVector = null;
+         byte[] encrypted = null;
+         byte[] decrypt = null;;
+         byte[] rsaEncr = null;
+         
+         os.println("Enter your name");
+         name=is.readLine().trim();
          
          synchronized(this){
             for(int i=0;i<maxClientsCount;i++){
                if(threads[i] !=null && threads [i] ==this){
                   clientName=name;
                   /******authentication protocol******/
-                  byte[] nonce = server.getNonce();
-                  //this.os.write(nonce, 0, nonce.length);
+                  nonce = server.getNonce();
+                  initVector = encryptor.initialisationVector();
+                  ArrayList<byte[]> signed = this.sendEncrypted(nonce, initVector);
                   
-                  	 os.println(" You have been connected");
+                  
+                  try {
+                	  rsaEncr = signed.remove(0);
+                	  encrypted = rsa.decrypt(rsaEncr, MultiThreadChatServerSync.privateKey); //decrypt first using server's key
+                	  boolean verified = rsa.verifySign(encrypted, signed.remove(0), this.publicKey); //verify encrypted message came from client
+                	  decrypt = encryptor.decrypt(encrypted, initVector, server.getMaster().getEncoded()); //decrypt the message if it came from client
+                	  if(verified){   	
+                	  }
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+                  this.os.println("NONCE: " + Arrays.toString(nonce));
+                  this.os.println("Encrypted with server's public key: " + Arrays.toString(rsaEncr));
+                  this.os.println("Encrypted NONCE with master key: " + Arrays.toString(encrypted));
+                  this.os.println("Decrypted NONCE: " + Arrays.toString(decrypt));
+                  this.os.flush();
+                  //System.out.println(Arrays.toString(nonce).equals(Arrays.toString(decrypt)));
+                  	
+                  	 /**this.os.println(" You have been connected");
                 	 this.session = server.getSession();
                      this.os.println("Session key "+ this.session + " has been generated for the session" );
                      this.os.println("Master key for thread: " + this.master);
                      this.os.println("Server Public Key: " + this.serverPubKey);
                      this.os.println("Your Public Key: " + this.publicKey);
-                     this.os.println("Your private Key: " + this.privateKey);
+                     this.os.println("Your private Key: " + this.privateKey);*/
                   
                   break;
                }
             }
+			
             for(int i=0;i<maxClientsCount;i++){
                if(threads[i] !=null && threads[i] != this){
                   threads[i].os.println("***" + name + " connected on the server ***");
@@ -194,15 +246,14 @@ class clientThread extends Thread{
 
 try {
          /*Start conversation.*/
-	 encryptor encr = new encryptor();
+	 	
          while(true){
-            String line=is.readLine();
+			String line=is.readLine();
             /*Hash the text user has entered*/
-            String hash = encr.hashText(line);
+            //String hash = encr.hashText(line);
            
-	    byte[] initVector = encr.initialisationVector();
-	    byte[] encrypted = encr.encrypt(line, initVector, this.session.getEncoded());
-	    
+	    initVector = encryptor.initialisationVector();
+	    	encrypted = encryptor.encrypt(line.getBytes(), initVector, this.session.getEncoded());
             if(line.startsWith("/quit")){
                break;
             }
@@ -215,7 +266,7 @@ try {
                     if(threads[i] != null && threads[i].clientName != null){
 						if (threads[i] != this) {
 							threads[i].os.println("<"+name + "> "+ new String(encrypted));
-							byte[] decrypted = encr.decrypt(encrypted, initVector, this.session.getEncoded());
+							byte[] decrypted = encryptor.decrypt(encrypted, initVector, this.session.getEncoded());
 							String msg = new String(decrypted);
 			                       		threads[i].os.println("<"+name + "> "+ msg);
 						}
@@ -224,8 +275,7 @@ try {
               }
 
          }
-} catch(Exception e) {
-	e.printStackTrace(); }
+} catch(Exception e) {e.printStackTrace();}
 
 	 /*
          synchronized(this){
