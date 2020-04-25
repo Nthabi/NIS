@@ -1,5 +1,5 @@
-# NIS
-Tool to allow users to chat and transfer files securely amongst each other.
+# Chatting & file transfer app
+Allows users to chat and transfer files securely amongst each other.
 
 To initlize chatting between two clients do the following:
 1. Open 3 terminals
